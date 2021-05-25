@@ -352,7 +352,7 @@ func TestKeyDataBasic_Bytes(t *testing.T) {
 		{
 			name: "Convert to byte",
 			keyDataBasic: DataBasic{
-				Component: []ComponentBasic{
+				Components: []ComponentBasic{
 					{
 						Type:  TypeDES,
 						Block: ComponentUnpaddedBlock{[]byte{0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4}},
@@ -379,7 +379,7 @@ func TestKeyDataBasic_Bytes(t *testing.T) {
 		{
 			name: "Error: invalid key component block",
 			keyDataBasic: DataBasic{
-				Component: []ComponentBasic{
+				Components: []ComponentBasic{
 					{
 						Type: TypeDES,
 						Block: ComponentPaddedBlock{
@@ -395,7 +395,7 @@ func TestKeyDataBasic_Bytes(t *testing.T) {
 		{
 			name: "Error: invalid key component block",
 			keyDataBasic: DataBasic{
-				Component: []ComponentBasic{
+				Components: []ComponentBasic{
 					{
 						Type: TypeDES,
 						Block: ComponentPaddedBlock{
@@ -411,7 +411,7 @@ func TestKeyDataBasic_Bytes(t *testing.T) {
 		{
 			name: "Error: invalid length of key component block",
 			keyDataBasic: DataBasic{
-				Component: []ComponentBasic{
+				Components: []ComponentBasic{
 					{
 						Type:  TypeDES,
 						Block: ComponentUnpaddedBlock{make([]byte, 65536)},

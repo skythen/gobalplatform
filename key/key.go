@@ -68,8 +68,8 @@ const (
 
 // ComponentBasic is a key component in basic format.
 type ComponentBasic struct {
-	Type  byte           // Type of the Key Component.
-	Block ComponentBlock // Block with a Key Component.
+	Type  byte           // Type of the Key Components.
+	Block ComponentBlock // Block with a Key Components.
 	KCV   []byte         // Optional Key Check Value.
 }
 
@@ -85,6 +85,7 @@ type ComponentBasic struct {
 // If you want to provide details regarding key usage and key access, use NewComponentExtended.
 func NewComponentBasic(keyComponentType byte, keyComponentValue, kcv []byte, paddingLength int) *ComponentBasic {
 	cb := &ComponentBasic{}
+
 	var block ComponentBlock
 
 	cb.Type = keyComponentType
@@ -115,7 +116,7 @@ type ComponentBlock interface {
 // padding that has been applied to the key component for encryption.
 type ComponentPaddedBlock struct {
 	LengthComponent int
-	Value           []byte // For a public key component, the key component value does not need to be encrypted and the Key Component Block only contains the clear-text key component value.
+	Value           []byte // For a public key component, the key component value does not need to be encrypted and the Key Components Block only contains the clear-text key component value.
 }
 
 //  Bytes implements the ComponentBlock interface and encodes ComponentPaddedBlock on LV-encoded bytes
@@ -301,7 +302,7 @@ func UsageForType(usage UsageType) *UsageQualifier {
 
 // DataBasic represents the data field of a PUT KEY command and contains a list of ComponentBasic.
 type DataBasic struct {
-	Component []ComponentBasic
+	Components []ComponentBasic
 }
 
 // Bytes encodes DataBasic on LV-encoded bytes.
@@ -311,22 +312,22 @@ func (db DataBasic) Bytes() ([]byte, error) {
 		err    error
 	)
 
-	bBlocks := make([][]byte, len(db.Component))
-	bBlockLength := make([][]byte, len(db.Component))
+	bBlocks := make([][]byte, len(db.Components))
+	bBlockLength := make([][]byte, len(db.Components))
 
 	// calculate length
-	for i, component := range db.Component {
+	for i, component := range db.Components {
 		// length key type length field = 1 and length key check value length field = 1
 		length += 2
 
 		bBlocks[i], err = component.Block.Bytes()
 		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("invalid key component block %d/%d", i, len(db.Component)))
+			return nil, errors.Wrap(err, fmt.Sprintf("invalid key component block %d/%d", i, len(db.Components)))
 		}
 
 		bBlockLength[i], err = util.BuildGPBerLength(uint(len(bBlocks[i])))
 		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("build BER length for Key Component %d/%d", i, len(db.Component)))
+			return nil, errors.Wrap(err, fmt.Sprintf("build BER length for Key Components %d/%d", i, len(db.Components)))
 		}
 
 		length += len(bBlockLength[i])
@@ -336,7 +337,7 @@ func (db DataBasic) Bytes() ([]byte, error) {
 
 	bytes := make([]byte, 0, length)
 
-	for i, com := range db.Component {
+	for i, com := range db.Components {
 		bytes = append(bytes, com.Type)
 		bytes = append(bytes, bBlockLength[i]...)
 		bytes = append(bytes, bBlocks[i]...)
@@ -366,7 +367,7 @@ func (de DataExtended) Bytes() ([]byte, error) {
 	for i, component := range de.Components {
 		length += 6
 
-		// Length of Key Component Block
+		// Length of Key Components Block
 		bBlocks[i], err = component.Block.Bytes()
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprintf("invalid key component block %d/%d", i+1, len(de.Components)))
@@ -374,7 +375,7 @@ func (de DataExtended) Bytes() ([]byte, error) {
 
 		bBlockLength[i], err = util.BuildGPBerLength(uint(len(bBlocks[i])))
 		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("build BER length for Key Component %d/%d", i, len(de.Components)))
+			return nil, errors.Wrap(err, fmt.Sprintf("build BER length for Key Components %d/%d", i, len(de.Components)))
 		}
 
 		bKeyUsage[i] = component.UsageQualifier.Bytes()
