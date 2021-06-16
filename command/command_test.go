@@ -8,9 +8,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/skythen/apdu"
-	"gobalplatform/aid"
-	"gobalplatform/internal/util"
-	"gobalplatform/open"
+	"github.com/skythen/gobalplatform/aid"
+	"github.com/skythen/gobalplatform/internal/util"
+	"github.com/skythen/gobalplatform/open"
 )
 
 func TestDeleteCardContent(t *testing.T) {

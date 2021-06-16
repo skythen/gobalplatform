@@ -7,7 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/skythen/bertlv"
-	"gobalplatform/tag"
+	"github.com/skythen/gobalplatform/tag"
 )
 
 // ExtendedCardResourcesInformation provides information about card resources as defined by ETSI TS 102 226 V16.0.0.

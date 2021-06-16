@@ -8,11 +8,11 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/skythen/bertlv"
-	"gobalplatform/aid"
-	"gobalplatform/internal/util"
-	"gobalplatform/open"
-	"gobalplatform/security"
-	"gobalplatform/tag"
+	"github.com/skythen/gobalplatform/aid"
+	"github.com/skythen/gobalplatform/internal/util"
+	"github.com/skythen/gobalplatform/open"
+	"github.com/skythen/gobalplatform/security"
+	"github.com/skythen/gobalplatform/tag"
 )
 
 // SCPParameters contains information about supported SCPs and their implementation options of a Card or Security Domain.

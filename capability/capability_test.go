@@ -4,10 +4,10 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"gobalplatform/aid"
-	"gobalplatform/internal/util"
-	"gobalplatform/open"
-	"gobalplatform/security"
+	"github.com/skythen/gobalplatform/aid"
+	"github.com/skythen/gobalplatform/internal/util"
+	"github.com/skythen/gobalplatform/open"
+	"github.com/skythen/gobalplatform/security"
 )
 
 func TestParseCardRecognitionData(t *testing.T) {

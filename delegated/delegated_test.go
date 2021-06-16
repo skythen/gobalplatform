@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/skythen/bertlv"
-	"gobalplatform/aid"
-	"gobalplatform/command"
-	"gobalplatform/internal/util"
-	"gobalplatform/open"
+	"github.com/skythen/gobalplatform/aid"
+	"github.com/skythen/gobalplatform/command"
+	"github.com/skythen/gobalplatform/internal/util"
+	"github.com/skythen/gobalplatform/open"
 )
 
 func TestParseConfirmation(t *testing.T) {

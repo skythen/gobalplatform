@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"gobalplatform/aid"
-	"gobalplatform/internal/util"
+	"github.com/skythen/gobalplatform/aid"
+	"github.com/skythen/gobalplatform/internal/util"
 )
 
 func TestParseExecutableLoadFileData(t *testing.T) {

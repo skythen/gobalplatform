@@ -3,7 +3,7 @@ package dgi
 import (
 	"testing"
 
-	"gobalplatform/internal/util"
+	"github.com/skythen/gobalplatform/internal/util"
 )
 
 func TestDGI_Bytes(t *testing.T) {

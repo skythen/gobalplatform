@@ -3,7 +3,7 @@ package crypto
 import (
 	"testing"
 
-	"gobalplatform/internal/util"
+	"github.com/skythen/gobalplatform/internal/util"
 )
 
 func TestPad80(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"gobalplatform/internal/util"
+	"github.com/skythen/gobalplatform/internal/util"
 )
 
 // UsageType is a key usage type that is used by GlobalPlatform.

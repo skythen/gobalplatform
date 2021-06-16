@@ -6,10 +6,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/skythen/apdu"
 	"github.com/skythen/bertlv"
-	"gobalplatform/aid"
-	"gobalplatform/internal/util"
-	"gobalplatform/open"
-	"gobalplatform/tag"
+	"github.com/skythen/gobalplatform/aid"
+	"github.com/skythen/gobalplatform/internal/util"
+	"github.com/skythen/gobalplatform/open"
+	"github.com/skythen/gobalplatform/tag"
 )
 
 const (

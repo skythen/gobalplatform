@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"gobalplatform/internal/util"
+	"github.com/skythen/gobalplatform/internal/util"
 )
 
 func TestParseExtendedCardResourcesInformation(t *testing.T) {

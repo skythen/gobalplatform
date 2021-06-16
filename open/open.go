@@ -7,8 +7,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/skythen/bertlv"
-	"gobalplatform/aid"
-	"gobalplatform/tag"
+	"github.com/skythen/gobalplatform/aid"
+	"github.com/skythen/gobalplatform/tag"
 )
 
 const (

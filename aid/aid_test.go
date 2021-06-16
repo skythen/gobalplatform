@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"gobalplatform/internal/util"
+	"github.com/skythen/gobalplatform/internal/util"
 )
 
 func TestParseAID(t *testing.T) {
