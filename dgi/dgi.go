@@ -34,7 +34,7 @@ type DGI struct {
 	Value []byte  // Value of the DGI.
 }
 
-// Bytes encodes the DGI as a TLV-like structure (not to be confused with BER-TLV).
+// Bytes returns DGI as BER-TLV-like structured bytes (not to be confused with BER-TLV).
 func (dgi DGI) Bytes() ([]byte, error) {
 	length, err := buildDGILength(uint(len(dgi.Value)))
 	if err != nil {

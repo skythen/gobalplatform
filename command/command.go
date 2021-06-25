@@ -577,7 +577,7 @@ type LoadFileStructure struct {
 	ICV                       []byte     // May be present if CipheredLoadFileDataBlock is present and has been encrypted with an ICV other than the zero ICV.
 }
 
-// Bytes returns the TLV encoded byte representation of LoadFileStructure.
+// Bytes returns LoadFileStructure as BER-TLV encoded bytes.
 func (lfs LoadFileStructure) Bytes() []byte {
 	builder := &bertlv.Builder{}
 
@@ -608,7 +608,7 @@ type DAPBlock struct {
 	LFDBSignature []byte  // Signature over the Load File Data Block.
 }
 
-// Bytes returns the TLV encoded byte representation of DAPBlock.
+// Bytes returns DAPBlock as BER-TLV bytes.
 func (dapBlock DAPBlock) Bytes() []byte {
 	return bertlv.Builder{}.AddBytes(tag.DAPBlock,
 		bertlv.Builder{}.
@@ -626,7 +626,7 @@ type CRTDigitalSignature struct {
 	TokenIdentifier               []byte // Token identifier/number (digital signature counter).
 }
 
-// Bytes returns the TLV encoded byte representation of CRTDigitalSignature.
+// Bytes returns CRTDigitalSignature as BER-TLV encoded bytes.
 func (crt CRTDigitalSignature) Bytes() []byte {
 	builder := &bertlv.Builder{}
 
@@ -662,7 +662,7 @@ type RequiredPrivacyStatus struct {
 	Value       []byte // structure is not specified by GPC Privacy Framework
 }
 
-// Bytes returns the TLV encoded byte representation of RequiredPrivacyStatus.
+// Bytes returns RequiredPrivacyStatus as BER-TLV encoded bytes.
 func (req RequiredPrivacyStatus) Bytes() []byte {
 	builder := &bertlv.Builder{}
 
@@ -681,7 +681,7 @@ type RequiredPrivacyCondition struct {
 	Value       []byte // structure is not specified by GPC Privacy Framework
 }
 
-// Bytes returns the TLV encoded byte representation of RequiredPrivacyCondition.
+// Bytes returns RequiredPrivacyCondition as BER-TLV encoded bytes.
 func (req RequiredPrivacyCondition) Bytes() []byte {
 	builder := &bertlv.Builder{}
 
@@ -694,7 +694,7 @@ func (req RequiredPrivacyCondition) Bytes() []byte {
 	return builder.Bytes()
 }
 
-// Bytes returns the TLV encoded byte representation of PrivacyRequirements.
+// Bytes returns PrivacyRequirements as BER-TLV encoded bytes.
 func (req PrivacyRequirements) Bytes() []byte {
 	outerBuilder := &bertlv.Builder{}
 	innerBuilder := &bertlv.Builder{}
@@ -728,7 +728,7 @@ type SystemSpecificParameters struct {
 	PrivacyRequirements                 *PrivacyRequirements // Privacy Requirements for an application.
 }
 
-// Bytes returns the TLV encoded byte representation of SystemSpecificParameters.
+// Bytes returns SystemSpecificParameters as BER-TLV encoded bytes.
 func (ssp SystemSpecificParameters) Bytes() []byte {
 	builder := &bertlv.Builder{}
 
@@ -789,7 +789,7 @@ type LoadParameters struct {
 	ControlReferenceTemplateForDigitalSignature *CRTDigitalSignature
 }
 
-// Bytes returns the TLV encoded byte representation of LoadParameters.
+// Bytes returns LoadParameters as BER-TLV encoded bytes.
 func (lp LoadParameters) Bytes() []byte {
 	builder := &bertlv.Builder{}
 
@@ -812,7 +812,7 @@ type InstallParameters struct {
 	ControlReferenceTemplateForDigitalSignature *CRTDigitalSignature
 }
 
-// Bytes returns the TLV encoded byte representation of InstallParameters.
+// Bytes returns InstallParameters as BER-TLV encoded bytes.
 func (ip InstallParameters) Bytes() []byte {
 	builder := &bertlv.Builder{}
 
@@ -843,7 +843,7 @@ type MakeSelectableParameters struct {
 	ControlReferenceTemplateForDigitalSignature *CRTDigitalSignature
 }
 
-// Bytes returns the TLV encoded byte representation of MakeSelectableParameters.
+// Bytes returns MakeSelectableParameters as BER-TLV encoded bytes.
 func (mp MakeSelectableParameters) Bytes() []byte {
 	builder := &bertlv.Builder{}
 
@@ -863,7 +863,7 @@ type ExtraditionParameters struct {
 	ControlReferenceTemplateForDigitalSignature *CRTDigitalSignature
 }
 
-// Bytes returns the TLV encoded byte representation of ExtraditionParameters.
+// Bytes returns ExtraditionParameters as BER-TLV encoded bytes.
 func (ep ExtraditionParameters) Bytes() []byte {
 	if ep.ControlReferenceTemplateForDigitalSignature != nil {
 		return bertlv.Builder{}.AddRaw(ep.ControlReferenceTemplateForDigitalSignature.Bytes()).Bytes()
@@ -878,7 +878,7 @@ type RegistryUpdateParameters struct {
 	ControlReferenceTemplateForDigitalSignature *CRTDigitalSignature
 }
 
-// Bytes returns the TLV encoded byte representation of RegistryUpdateParameters.
+// Bytes returns RegistryUpdateParameters as BER-TLV encoded bytes.
 func (rup RegistryUpdateParameters) Bytes() []byte {
 	builder := &bertlv.Builder{}
 

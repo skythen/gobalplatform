@@ -17,11 +17,11 @@ type ExtendedCardResourcesInformation struct {
 	FreeVM                int // Free volatile memory available for at least applications loaded via ISD.
 }
 
-// ParseExtendedCardResourcesInformation parses the TLV encoded Extended Card Resources KeyInformation and returns ExtendedCardResourcesInformation.
+// ParseExtendedCardResourcesInformation parses the BER-TLV encoded Extended Card Resources KeyInformation and returns ExtendedCardResourcesInformation.
 func ParseExtendedCardResourcesInformation(b []byte) (*ExtendedCardResourcesInformation, error) {
 	tlvs, err := bertlv.Parse(b)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid TLV")
+		return nil, errors.Wrap(err, "invalid BER-TLV")
 	}
 
 	tlvExtended := tlvs.FindFirstWithTag(tag.ExtendedCardResourcesInformation)
@@ -169,11 +169,11 @@ func ParseUsageQualifier(b byte) *UsageQualifierInfo {
 	return uqi
 }
 
-// ParseKeyInformationTemplate parses the TLV encoded Key KeyInformation Template and returns KeyInformationTemplate.
+// ParseKeyInformationTemplate parses the BER-TLV encoded Key KeyInformation Template and returns KeyInformationTemplate.
 func ParseKeyInformationTemplate(b []byte) (*KeyInformationTemplate, error) {
 	tlvs, err := bertlv.Parse(b)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid TLV")
+		return nil, errors.Wrap(err, "invalid BER-TLV")
 	}
 
 	tlvKeyInformationTemplate := tlvs.FindFirstWithTag(tag.KeyInformationTemplate)

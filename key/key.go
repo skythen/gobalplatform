@@ -119,7 +119,7 @@ type ComponentPaddedBlock struct {
 	Value           []byte // For a public key component, the key component value does not need to be encrypted and the Key Components Block only contains the clear-text key component value.
 }
 
-//  Bytes implements the ComponentBlock interface and encodes ComponentPaddedBlock on LV-encoded bytes
+// Bytes implements the ComponentBlock interface and encodes ComponentPaddedBlock on LV-encoded bytes
 func (block ComponentPaddedBlock) Bytes() ([]byte, error) {
 	lengthComponent, err := util.BuildGPBerLength(uint(block.LengthComponent))
 	if err != nil {
@@ -153,7 +153,7 @@ type ComponentExtended struct {
 // NewComponentExtended creates a new ComponentExtended with a key component.
 // It calls NewComponentBasic and adds the extended data Key Usage Qualifier and Key Access.
 //
-// If the key component value needs to be encrypted, it shall be encrypted with the DEK key of the current secure messaging session.
+// If the key component value needs to be encrypted, it shall be encrypted with the static DEK/S-DEK of the current secure messaging session.
 //
 // Depending on the indicated padding length, the key component is either wrapped with a ComponentPaddedBlock (in case of applied padding)
 // or a ComponentUnpaddedBlock (in case of no padding).
@@ -182,7 +182,7 @@ type UsageQualifier struct {
 	KeyAgreement               bool
 }
 
-// Bytes encodes UsageQualifier on 1-2 bytes, depending on the presence of KeyAgreement.
+// Bytes returns UsageQualifier as 1-2 bytes, depending on the presence of KeyAgreement.
 func (uq UsageQualifier) Bytes() []byte {
 	var bytes []byte
 
@@ -305,7 +305,7 @@ type DataBasic struct {
 	Components []ComponentBasic
 }
 
-// Bytes encodes DataBasic on LV-encoded bytes.
+// Bytes returns DataBasic as LV-encoded bytes.
 func (db DataBasic) Bytes() ([]byte, error) {
 	var (
 		length int
@@ -348,12 +348,12 @@ func (db DataBasic) Bytes() ([]byte, error) {
 	return bytes, nil
 }
 
-// DataBasic represents the data field of a PUT KEY command and contains a list of ComponentExtended.
+// DataExtended represents the data field of a PUT KEY command and contains a list of ComponentExtended.
 type DataExtended struct {
 	Components []ComponentExtended
 }
 
-// Bytes encodes DataExtended on LV-encoded bytes.
+// Bytes returns DataExtended as LV-encoded bytes.
 func (de DataExtended) Bytes() ([]byte, error) {
 	var (
 		length int

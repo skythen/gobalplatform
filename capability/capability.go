@@ -28,17 +28,17 @@ type CardRecognitionData struct {
 	GPVersion                          string         // Version of the GlobalPlatform Card Specification a card conforms to.
 	CardIdentificationSchemeOID        []byte         // Indicates a card that is uniquely identified by an IIN and CIN.
 	SCPOptions                         *SCPParameters // Supported SCPs and options.
-	CardConfigurationDetails           []byte         // TLV encoded GlobalPlatform implementation details or commonly used Card Issuer parameter.
-	CardAndChipDetails                 []byte         // TLV encoded information about card and chip implementation, such as the operating system/runtime environment or a security kernel.
-	SDTrustPointCertificateInformation []byte         // TLV encoded TP-ISD related certificate information for SCP10.
-	SDCertificateInformation           []byte         // TLV encoded SD-related certificate information for SCP10.
+	CardConfigurationDetails           []byte         // BER-TLV encoded GlobalPlatform implementation details or commonly used Card Issuer parameter.
+	CardAndChipDetails                 []byte         // BER-TLV encoded information about card and chip implementation, such as the operating system/runtime environment or a security kernel.
+	SDTrustPointCertificateInformation []byte         // BER-TLV encoded TP-ISD related certificate information for SCP10.
+	SDCertificateInformation           []byte         // BER-TLV encoded SD-related certificate information for SCP10.
 }
 
-// ParseCardRecognitionData parses the TLV encoded Card Recognition Data and returns CardRecognitionData.
+// ParseCardRecognitionData parses the BER-TLV encoded Card Recognition Data and returns CardRecognitionData.
 func ParseCardRecognitionData(b []byte) (*CardRecognitionData, error) {
 	tlvs, err := bertlv.Parse(b)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid TLV")
+		return nil, errors.Wrap(err, "invalid BER-TLV")
 	}
 
 	tlvCardData := tlvs.FindFirstWithTag(tag.CardData)
@@ -76,7 +76,7 @@ type SCP03SupportedKeys struct {
 	AES256 bool // 256 bit key.
 }
 
-// ParseSCPInformation parses the TLV encoded SCP information of one SCP and returns SCPInformation.
+// ParseSCPInformation parses the BER-TLV encoded SCP information of one SCP and returns SCPInformation.
 // If the SCP type is SCP03, SCP03SupportedKeys is present, otherwise nil.
 // If the SCP type is SCP81, Supported TLS Cipher Suites SCP81 and Max Length Pre Shared Key SCP81 is present, otherwise nil.
 func ParseSCPInformation(b []byte) (*SCPInformation, error) {
@@ -84,7 +84,7 @@ func ParseSCPInformation(b []byte) (*SCPInformation, error) {
 
 	tlvs, err := bertlv.Parse(b)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid TLV")
+		return nil, errors.Wrap(err, "invalid BER-TLV")
 	}
 
 	tlvSCPInfo := tlvs.FindFirstWithTag(tag.SCPInformation)
@@ -185,11 +185,11 @@ func (info *SCPInformation) addSCP81Information(tlv *bertlv.BerTLV) error {
 // The structure of SecurityDomainManagementData is similar to the structure of CardRecognitionData.
 type SecurityDomainManagementData = CardRecognitionData
 
-// ParseSecurityDomainManagementData parses the TLV encoded Security Domain Management Data and returns SecurityDomainManagementData.
+// ParseSecurityDomainManagementData parses the BER-TLV encoded Security Domain Management Data and returns SecurityDomainManagementData.
 func ParseSecurityDomainManagementData(b []byte) (*SecurityDomainManagementData, error) {
 	tlvs, err := bertlv.Parse(b)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid TLV")
+		return nil, errors.Wrap(err, "invalid BER-TLV")
 	}
 
 	// check for tag '73'
@@ -371,13 +371,13 @@ type CardCapabilityInformation struct {
 	KeyParameterReferenceList       *KeyParameterReferenceValues   // Indicates the supported Key Parameter Reference Values by the card if the card supports Delegated Management and/or DAP Verification schemes based on EC cryptography.
 }
 
-// ParseCardCapabilityInformation parses the TLV encoded Card Capability Information and returns CardCapabilityInformation.
+// ParseCardCapabilityInformation parses the BER-TLV encoded Card Capability Information and returns CardCapabilityInformation.
 func ParseCardCapabilityInformation(b []byte) (*CardCapabilityInformation, error) {
 	cci := &CardCapabilityInformation{}
 
 	tlvs, err := bertlv.Parse(b)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid TLV")
+		return nil, errors.Wrap(err, "invalid BER-TLV")
 	}
 
 	tlvCardCapabilityInformation := tlvs.FindFirstWithTag(tag.CardCapabilityInformation)
@@ -760,11 +760,11 @@ type FileControlInformation struct {
 	ProprietaryData ProprietaryData
 }
 
-// ParseFileControlInformation parses the TLV encoded File Control Information and returns FileControlInformation.
+// ParseFileControlInformation parses the BER-TLV encoded File Control Information and returns FileControlInformation.
 func ParseFileControlInformation(b []byte) (*FileControlInformation, error) {
 	tlvs, err := bertlv.Parse(b)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid TLV")
+		return nil, errors.Wrap(err, "invalid BER-TLV")
 	}
 
 	// search for fci tag
@@ -809,7 +809,7 @@ type ProprietaryData struct {
 func parseProprietaryData(b []byte) (*ProprietaryData, error) {
 	tlvs, err := bertlv.Parse(b)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid TLV")
+		return nil, errors.Wrap(err, "invalid BER-TLV")
 	}
 
 	tlvProp := tlvs.FindFirstWithTag(tag.ProprietaryData)

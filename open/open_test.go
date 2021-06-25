@@ -40,7 +40,7 @@ func TestParseExecutableLoadFileData(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "Error: invalid TLV",
+			name: "Error: invalid BER-TLV",
 			inputBytes: []byte{0xE3, 0x23,
 				0x4F, 0x05, 0x01, 0x02, 0x03, 0x04, 0x05,
 				0x9F, 0x70, 0x01, 0x01,
@@ -229,7 +229,7 @@ func TestParseApplicationData(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "Error: invalid TLV",
+			name: "Error: invalid BER-TLV",
 			inputBytes: []byte{0xE3, 0x22,
 				0x4F, 0x05, 0x01, 0x02, 0x03, 0x04, 0x05,
 				0x9F, 0x70, 0x01, 0x07,

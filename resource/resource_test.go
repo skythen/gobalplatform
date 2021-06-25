@@ -55,7 +55,7 @@ func TestParseExtendedCardResourcesInformation(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:        "Error: invalid TLV ",
+			name:        "Error: invalid BER-TLV ",
 			inputBytes:  []byte{0xFF, 0x21, 0x20, 0x81, 0x02, 0x00, 0xFF, 0x82, 0x04, 0x00, 0x00, 0x00, 0xFF, 0x83, 0x04, 0x00, 0x00, 0x3D, 0xBF},
 			expected:    nil,
 			expectError: true,
@@ -292,7 +292,7 @@ func TestParseKeyInformationTemplate(t *testing.T) {
 			expectError: true,
 		},
 		{
-			name:        "Error: invalid TLV",
+			name:        "Error: invalid BER-TLV",
 			inputBytes:  []byte{0xE0, 0x07, 0xC0, 0x04, 0x01, 0xFF, 0x80, 0x10},
 			expected:    nil,
 			expectError: true,

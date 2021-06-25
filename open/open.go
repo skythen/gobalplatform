@@ -66,11 +66,11 @@ type ApplicationData struct {
 	AssociatedSecurityDomainAID aid.AID                       // AID of the currently associated Security Domain.
 }
 
-// ParseApplicationData parses the TLV encoded application data and returns a list of ApplicationData.
+// ParseApplicationData parses the BER-TLV encoded application data and returns a list of ApplicationData.
 func ParseApplicationData(b []byte) ([]ApplicationData, error) {
 	tlvs, err := bertlv.Parse(b)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid TLV")
+		return nil, errors.Wrap(err, "invalid BER-TLV")
 	}
 
 	tlvRegistryData := tlvs.FindAllWithTag(tag.RegistryRelatedData)
@@ -186,11 +186,11 @@ type ExecutableLoadFileData struct {
 	AssociatedSDAID aid.AID           // AID of the currently associated Security Domain.
 }
 
-// ParseExecutableLoadFileData parses the TLV encoded Executable Load File Data and returns a list of ExecutableLoadFileData.
+// ParseExecutableLoadFileData parses the BER-TLV encoded Executable Load File Data and returns a list of ExecutableLoadFileData.
 func ParseExecutableLoadFileData(b []byte) ([]ExecutableLoadFileData, error) {
 	tlvs, err := bertlv.Parse(b)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid TLV")
+		return nil, errors.Wrap(err, "invalid BER-TLV")
 	}
 
 	tlvRegistryData := tlvs.FindAllWithTag(tag.RegistryRelatedData)
@@ -414,7 +414,7 @@ const (
 // Privileges is a list of Privilege.
 type Privileges []Privilege
 
-// Bytes encodes a set of Privileges on 3 bytes.
+// Bytes returns a set of Privileges encoded on 3 bytes.
 // An error will be returned if DAPVerification and MandatedDAPVerification are present at the same time.
 // Other privileges may be mutually exclusive as well (e.g. AuthorizedManagement and DelegatedManagement) but since they can
 // be encoded at the same time, no error will be returned.
