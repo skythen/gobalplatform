@@ -113,7 +113,7 @@ func applicationDataFromTLV(ad bertlv.BerTLV) (*ApplicationData, error) {
 	}
 
 	// TODO some SCs return the life cycle state encoded on 2 byte, with the second byte being 0 ?!
-	if len(tlvLCS.Value) > 2 {
+	if len(tlvLCS.Value) != 1 && len(tlvLCS.Value) != 2 {
 		return nil, fmt.Errorf("life cycle state must be encoded with one or two byte, got %d", len(tlvLCS.Value))
 	}
 
@@ -232,8 +232,9 @@ func executableLoadFileDataFromTLV(elf bertlv.BerTLV) (*ExecutableLoadFileData, 
 		return nil, errors.New("mandatory tag '9F70' for Life Cycle State not present")
 	}
 
-	if len(tlvLCS.Value) != 1 {
-		return nil, fmt.Errorf("life cycle state must be encoded with one byte, got %d", len(tlvLCS.Value))
+	// TODO some SCs return the life cycle state encoded on 2 byte, with the second byte being 0 ?!
+	if len(tlvLCS.Value) != 1 && len(tlvLCS.Value) != 2 {
+		return nil, fmt.Errorf("life cycle state must be encoded with one or two byte, got %d", len(tlvLCS.Value))
 	}
 
 	data.LifeCycleState = tlvLCS.Value[0]
