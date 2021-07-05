@@ -9,20 +9,22 @@ import (
 
 func TestNewKeyComponentBasicEncrypted(t *testing.T) {
 	tests := []struct {
-		name               string
-		inputKeyType       byte
-		inputEncryptedKey  []byte
-		inputKCV           []byte
-		inputPaddingLength int
-		expected           *ComponentBasic
-		expectError        bool
+		name                         string
+		inputKeyType                 byte
+		inputEncryptedKey            []byte
+		inputKCV                     []byte
+		inputPaddingLength           int
+		inputUsePaddingPresentFormat bool
+		expected                     *ComponentBasic
+		expectError                  bool
 	}{
 		{
-			name:               "Unpadded Block, DES key",
-			inputKeyType:       0x80,
-			inputEncryptedKey:  []byte{0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4},
-			inputKCV:           []byte{0x51, 0xBB, 0xED},
-			inputPaddingLength: 0,
+			name:                         "Unpadded Block, DES key",
+			inputKeyType:                 0x80,
+			inputEncryptedKey:            []byte{0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4},
+			inputKCV:                     []byte{0x51, 0xBB, 0xED},
+			inputPaddingLength:           0,
+			inputUsePaddingPresentFormat: false,
 			expected: &ComponentBasic{
 				Type:  0x80,
 				Block: ComponentUnpaddedBlock{Value: []byte{0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4}},
@@ -31,11 +33,28 @@ func TestNewKeyComponentBasicEncrypted(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:               "Unpadded Block, AES key",
-			inputKeyType:       0x88,
-			inputEncryptedKey:  []byte{0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4},
-			inputKCV:           []byte{0x17, 0x96, 0x72},
-			inputPaddingLength: 0,
+			name:                         "Unpadded Block, DES key, use padding present format",
+			inputKeyType:                 0x80,
+			inputEncryptedKey:            []byte{0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4},
+			inputKCV:                     []byte{0x51, 0xBB, 0xED},
+			inputPaddingLength:           0,
+			inputUsePaddingPresentFormat: true,
+			expected: &ComponentBasic{
+				Type: 0x80,
+				Block: ComponentPaddedBlock{
+					LengthComponent: 16,
+					Value:           []byte{0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4}},
+				KCV: []byte{0x51, 0xBB, 0xED},
+			},
+			expectError: false,
+		},
+		{
+			name:                         "Unpadded Block, AES key",
+			inputKeyType:                 0x88,
+			inputEncryptedKey:            []byte{0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4},
+			inputKCV:                     []byte{0x17, 0x96, 0x72},
+			inputPaddingLength:           0,
+			inputUsePaddingPresentFormat: false,
 			expected: &ComponentBasic{
 				Type:  0x88,
 				Block: ComponentUnpaddedBlock{Value: []byte{0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4}},
@@ -44,11 +63,12 @@ func TestNewKeyComponentBasicEncrypted(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:               "Padded Block",
-			inputKeyType:       0x55,
-			inputEncryptedKey:  []byte{0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5},
-			inputKCV:           nil,
-			inputPaddingLength: 1,
+			name:                         "Padded Block",
+			inputKeyType:                 0x55,
+			inputEncryptedKey:            []byte{0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5},
+			inputKCV:                     nil,
+			inputPaddingLength:           1,
+			inputUsePaddingPresentFormat: false,
 			expected: &ComponentBasic{
 				Type: 0x55,
 				Block: ComponentPaddedBlock{
@@ -62,7 +82,7 @@ func TestNewKeyComponentBasicEncrypted(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			received := NewComponentBasic(tc.inputKeyType, tc.inputEncryptedKey, tc.inputKCV, tc.inputPaddingLength)
+			received := NewComponentBasic(tc.inputKeyType, tc.inputEncryptedKey, tc.inputKCV, tc.inputPaddingLength, tc.inputUsePaddingPresentFormat)
 
 			if !cmp.Equal(tc.expected, received) {
 				t.Errorf("Expected: '%v', got: '%v'", tc.expected, received)
@@ -73,15 +93,16 @@ func TestNewKeyComponentBasicEncrypted(t *testing.T) {
 
 func TestNewKeyComponentExtendedEncrypted(t *testing.T) {
 	tests := []struct {
-		name               string
-		inputKeyType       byte
-		inputKey           []byte
-		inputKCV           []byte
-		inputKeyUsage      UsageQualifier
-		inputKeyAccess     util.NullByte
-		inputPaddingLength int
-		expected           *ComponentExtended
-		expectError        bool
+		name                         string
+		inputKeyType                 byte
+		inputKey                     []byte
+		inputKCV                     []byte
+		inputKeyUsage                UsageQualifier
+		inputKeyAccess               util.NullByte
+		inputPaddingLength           int
+		inputUsePaddingPresentFormat bool
+		expected                     *ComponentExtended
+		expectError                  bool
 	}{
 		{
 			name:          "no error, padded block ",
@@ -93,7 +114,8 @@ func TestNewKeyComponentExtendedEncrypted(t *testing.T) {
 				Byte:  AccessSdOnly,
 				Valid: true,
 			},
-			inputPaddingLength: 1,
+			inputPaddingLength:           1,
+			inputUsePaddingPresentFormat: false,
 			expected: &ComponentExtended{
 				ComponentBasic: ComponentBasic{
 					Type: 0x50,
@@ -114,7 +136,7 @@ func TestNewKeyComponentExtendedEncrypted(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			received := NewComponentExtended(tc.inputKeyType, tc.inputKey, tc.inputKCV, tc.inputPaddingLength, tc.inputKeyUsage, tc.inputKeyAccess)
+			received := NewComponentExtended(tc.inputKeyType, tc.inputKey, tc.inputKCV, tc.inputPaddingLength, tc.inputKeyUsage, tc.inputKeyAccess, tc.inputUsePaddingPresentFormat)
 
 			if !cmp.Equal(tc.expected, received) {
 				t.Errorf("Expected: '%v', got: '%v'", tc.expected, received)
@@ -526,15 +548,17 @@ func TestKeyDataExtended_Bytes(t *testing.T) {
 
 func TestGetCurveParametersAk(t *testing.T) {
 	tests := []struct {
-		name           string
-		inputCurveName string
-		expectedA      *ComponentBasic
-		expectedK      *ComponentBasic
-		expectError    bool
+		name                         string
+		inputCurveName               string
+		inputUsePaddingPresentFormat bool
+		expectedA                    *ComponentBasic
+		expectedK                    *ComponentBasic
+		expectError                  bool
 	}{
 		{
-			name:           "P-224",
-			inputCurveName: "P-224",
+			name:                         "P-224",
+			inputCurveName:               "P-224",
+			inputUsePaddingPresentFormat: false,
 			expectedA: &ComponentBasic{
 				Type:  0xB3,
 				Block: ComponentUnpaddedBlock{secp224r1A},
@@ -546,8 +570,9 @@ func TestGetCurveParametersAk(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:           "P-256",
-			inputCurveName: "P-256",
+			name:                         "P-256",
+			inputCurveName:               "P-256",
+			inputUsePaddingPresentFormat: false,
 			expectedA: &ComponentBasic{
 				Type:  0xB3,
 				Block: ComponentUnpaddedBlock{secp256r1A},
@@ -559,8 +584,9 @@ func TestGetCurveParametersAk(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:           "P-384",
-			inputCurveName: "P-384",
+			name:                         "P-384",
+			inputCurveName:               "P-384",
+			inputUsePaddingPresentFormat: false,
 			expectedA: &ComponentBasic{
 				Type:  0xB3,
 				Block: ComponentUnpaddedBlock{secp384r1A},
@@ -572,8 +598,9 @@ func TestGetCurveParametersAk(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:           "P-521",
-			inputCurveName: "P-521",
+			name:                         "P-521",
+			inputCurveName:               "P-521",
+			inputUsePaddingPresentFormat: false,
 			expectedA: &ComponentBasic{
 				Type:  0xB3,
 				Block: ComponentUnpaddedBlock{secp521r1A},
@@ -585,8 +612,9 @@ func TestGetCurveParametersAk(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:           "brainpoolP256t1",
-			inputCurveName: "brainpoolP256t1",
+			name:                         "brainpoolP256t1",
+			inputCurveName:               "brainpoolP256t1",
+			inputUsePaddingPresentFormat: false,
 			expectedA: &ComponentBasic{
 				Type:  0xB3,
 				Block: ComponentUnpaddedBlock{brainpoolP256t1A},
@@ -598,8 +626,9 @@ func TestGetCurveParametersAk(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:           "brainpoolP256r1",
-			inputCurveName: "brainpoolP256r1",
+			name:                         "brainpoolP256r1",
+			inputCurveName:               "brainpoolP256r1",
+			inputUsePaddingPresentFormat: false,
 			expectedA: &ComponentBasic{
 				Type:  0xB3,
 				Block: ComponentUnpaddedBlock{brainpoolP256r1A},
@@ -611,8 +640,9 @@ func TestGetCurveParametersAk(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:           "brainpoolP384t1",
-			inputCurveName: "brainpoolP384t1",
+			name:                         "brainpoolP384t1",
+			inputCurveName:               "brainpoolP384t1",
+			inputUsePaddingPresentFormat: false,
 			expectedA: &ComponentBasic{
 				Type:  0xB3,
 				Block: ComponentUnpaddedBlock{brainpoolP384t1A},
@@ -624,8 +654,9 @@ func TestGetCurveParametersAk(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:           "brainpoolP384r1",
-			inputCurveName: "brainpoolP384r1",
+			name:                         "brainpoolP384r1",
+			inputCurveName:               "brainpoolP384r1",
+			inputUsePaddingPresentFormat: false,
 			expectedA: &ComponentBasic{
 				Type:  0xB3,
 				Block: ComponentUnpaddedBlock{brainpoolP384r1A},
@@ -637,8 +668,9 @@ func TestGetCurveParametersAk(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:           "brainpoolP512r1",
-			inputCurveName: "brainpoolP512r1",
+			name:                         "brainpoolP512r1",
+			inputCurveName:               "brainpoolP512r1",
+			inputUsePaddingPresentFormat: false,
 			expectedA: &ComponentBasic{
 				Type:  0xB3,
 				Block: ComponentUnpaddedBlock{brainpoolP512r1A},
@@ -650,8 +682,9 @@ func TestGetCurveParametersAk(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:           "brainpoolP512t1",
-			inputCurveName: "brainpoolP512t1",
+			name:                         "brainpoolP512t1",
+			inputCurveName:               "brainpoolP512t1",
+			inputUsePaddingPresentFormat: false,
 			expectedA: &ComponentBasic{
 				Type:  0xB3,
 				Block: ComponentUnpaddedBlock{brainpoolP512t1A},
@@ -673,7 +706,7 @@ func TestGetCurveParametersAk(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			receivedA, receivedK, err := GetCurveParametersAk(tc.inputCurveName)
+			receivedA, receivedK, err := GetCurveParametersAk(tc.inputCurveName, tc.inputUsePaddingPresentFormat)
 
 			if err != nil && !tc.expectError {
 				t.Errorf("Expected: no error, got: error(%v)", err.Error())

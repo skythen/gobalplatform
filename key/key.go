@@ -83,14 +83,14 @@ type ComponentBasic struct {
 // For some key components it is required to provide a key check value (e.g. for AES or DES keys).
 //
 // If you want to provide details regarding key usage and key access, use NewComponentExtended.
-func NewComponentBasic(keyComponentType byte, keyComponentValue, kcv []byte, paddingLength int) *ComponentBasic {
+func NewComponentBasic(keyComponentType byte, keyComponentValue, kcv []byte, paddingLength int, usePaddingPresentFormat bool) *ComponentBasic {
 	cb := &ComponentBasic{}
 
 	var block ComponentBlock
 
 	cb.Type = keyComponentType
 
-	if paddingLength != 0 {
+	if usePaddingPresentFormat || paddingLength != 0 {
 		block = ComponentPaddedBlock{
 			LengthComponent: len(keyComponentValue) - paddingLength,
 			Value:           keyComponentValue,
@@ -159,8 +159,8 @@ type ComponentExtended struct {
 // or a ComponentUnpaddedBlock (in case of no padding).
 //
 // For some key components it is required to provide a key check value (e.g. for AES or DES keys).
-func NewComponentExtended(keyComponentType byte, keyComponentValue, kcv []byte, paddingLength int, keyUsage UsageQualifier, keyAccess util.NullByte) *ComponentExtended {
-	cb := NewComponentBasic(keyComponentType, keyComponentValue, kcv, paddingLength)
+func NewComponentExtended(keyComponentType byte, keyComponentValue, kcv []byte, paddingLength int, keyUsage UsageQualifier, keyAccess util.NullByte, forcePaddedFormat bool) *ComponentExtended {
+	cb := NewComponentBasic(keyComponentType, keyComponentValue, kcv, paddingLength, forcePaddedFormat)
 
 	return &ComponentExtended{
 		ComponentBasic: *cb,
@@ -425,38 +425,38 @@ var (
 
 // GetCurveParametersAk returns field parameters A and k of an elliptic curve as ComponentBasic.
 // Supported curve names are: P-224, P-256, P-384, P-521, brainpoolP256t1, brainpoolP256r1, brainpoolP384t1, brainpoolP384r1, brainpoolP512t1 and brainpoolP512r1
-func GetCurveParametersAk(curvename string) (kcParameterA, kcParameterK *ComponentBasic, err error) {
+func GetCurveParametersAk(curvename string, usePaddingPresentFormat bool) (kcParameterA, kcParameterK *ComponentBasic, err error) {
 	switch curvename {
 	case "P-224":
-		kcParameterA = NewComponentBasic(TypeECCFieldParameterA, secp224r1A, nil, 0)
-		kcParameterK = NewComponentBasic(TypeECCFieldParameterK, secpr1k, nil, 0)
+		kcParameterA = NewComponentBasic(TypeECCFieldParameterA, secp224r1A, nil, 0, usePaddingPresentFormat)
+		kcParameterK = NewComponentBasic(TypeECCFieldParameterK, secpr1k, nil, 0, usePaddingPresentFormat)
 	case "P-256":
-		kcParameterA = NewComponentBasic(TypeECCFieldParameterA, secp256r1A, nil, 0)
-		kcParameterK = NewComponentBasic(TypeECCFieldParameterK, secpr1k, nil, 0)
+		kcParameterA = NewComponentBasic(TypeECCFieldParameterA, secp256r1A, nil, 0, usePaddingPresentFormat)
+		kcParameterK = NewComponentBasic(TypeECCFieldParameterK, secpr1k, nil, 0, usePaddingPresentFormat)
 	case "P-384":
-		kcParameterA = NewComponentBasic(TypeECCFieldParameterA, secp384r1A, nil, 0)
-		kcParameterK = NewComponentBasic(TypeECCFieldParameterK, secpr1k, nil, 0)
+		kcParameterA = NewComponentBasic(TypeECCFieldParameterA, secp384r1A, nil, 0, usePaddingPresentFormat)
+		kcParameterK = NewComponentBasic(TypeECCFieldParameterK, secpr1k, nil, 0, usePaddingPresentFormat)
 	case "P-521":
-		kcParameterA = NewComponentBasic(TypeECCFieldParameterA, secp521r1A, nil, 0)
-		kcParameterK = NewComponentBasic(TypeECCFieldParameterK, secpr1k, nil, 0)
+		kcParameterA = NewComponentBasic(TypeECCFieldParameterA, secp521r1A, nil, 0, usePaddingPresentFormat)
+		kcParameterK = NewComponentBasic(TypeECCFieldParameterK, secpr1k, nil, 0, usePaddingPresentFormat)
 	case "brainpoolP256t1":
-		kcParameterA = NewComponentBasic(TypeECCFieldParameterA, brainpoolP256t1A, nil, 0)
-		kcParameterK = NewComponentBasic(TypeECCFieldParameterK, brainpool1K, nil, 0)
+		kcParameterA = NewComponentBasic(TypeECCFieldParameterA, brainpoolP256t1A, nil, 0, usePaddingPresentFormat)
+		kcParameterK = NewComponentBasic(TypeECCFieldParameterK, brainpool1K, nil, 0, usePaddingPresentFormat)
 	case "brainpoolP256r1":
-		kcParameterA = NewComponentBasic(TypeECCFieldParameterA, brainpoolP256r1A, nil, 0)
-		kcParameterK = NewComponentBasic(TypeECCFieldParameterK, brainpool1K, nil, 0)
+		kcParameterA = NewComponentBasic(TypeECCFieldParameterA, brainpoolP256r1A, nil, 0, usePaddingPresentFormat)
+		kcParameterK = NewComponentBasic(TypeECCFieldParameterK, brainpool1K, nil, 0, usePaddingPresentFormat)
 	case "brainpoolP384t1":
-		kcParameterA = NewComponentBasic(TypeECCFieldParameterA, brainpoolP384t1A, nil, 0)
-		kcParameterK = NewComponentBasic(TypeECCFieldParameterK, brainpool1K, nil, 0)
+		kcParameterA = NewComponentBasic(TypeECCFieldParameterA, brainpoolP384t1A, nil, 0, usePaddingPresentFormat)
+		kcParameterK = NewComponentBasic(TypeECCFieldParameterK, brainpool1K, nil, 0, usePaddingPresentFormat)
 	case "brainpoolP384r1":
-		kcParameterA = NewComponentBasic(TypeECCFieldParameterA, brainpoolP384r1A, nil, 0)
-		kcParameterK = NewComponentBasic(TypeECCFieldParameterK, brainpool1K, nil, 0)
+		kcParameterA = NewComponentBasic(TypeECCFieldParameterA, brainpoolP384r1A, nil, 0, usePaddingPresentFormat)
+		kcParameterK = NewComponentBasic(TypeECCFieldParameterK, brainpool1K, nil, 0, usePaddingPresentFormat)
 	case "brainpoolP512t1":
-		kcParameterA = NewComponentBasic(TypeECCFieldParameterA, brainpoolP512t1A, nil, 0)
-		kcParameterK = NewComponentBasic(TypeECCFieldParameterK, brainpool1K, nil, 0)
+		kcParameterA = NewComponentBasic(TypeECCFieldParameterA, brainpoolP512t1A, nil, 0, usePaddingPresentFormat)
+		kcParameterK = NewComponentBasic(TypeECCFieldParameterK, brainpool1K, nil, 0, usePaddingPresentFormat)
 	case "brainpoolP512r1":
-		kcParameterA = NewComponentBasic(TypeECCFieldParameterA, brainpoolP512r1A, nil, 0)
-		kcParameterK = NewComponentBasic(TypeECCFieldParameterK, brainpool1K, nil, 0)
+		kcParameterA = NewComponentBasic(TypeECCFieldParameterA, brainpoolP512r1A, nil, 0, usePaddingPresentFormat)
+		kcParameterK = NewComponentBasic(TypeECCFieldParameterK, brainpool1K, nil, 0, usePaddingPresentFormat)
 	default:
 		return nil, nil, errors.New("unsupported curve or unknown curve name")
 	}
