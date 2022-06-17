@@ -38,7 +38,7 @@ const (
 	storeDataINS                 byte = 0xE2
 )
 
-// DeleteCardContent returns a apdu.Capdu that contains a DELETE command that is used to delete a uniquely identifiable
+// DeleteCardContent returns an apdu.Capdu that contains a DELETE command that is used to delete a uniquely identifiable
 // object such as an Executable Load File, an Application or an Executable Load File and its related Applications.
 //
 // A token or a cryptographic reference template for digital signature can be added.
@@ -68,7 +68,7 @@ func DeleteCardContent(relatedObjects bool, elfOrAppAID aid.AID, token []byte, c
 	return capdu
 }
 
-// DeleteKey returns a apdu.Capdu that contains a DELETE command that is used to delete a key
+// DeleteKey returns an apdu.Capdu that contains a DELETE command that is used to delete a key
 // identified by the Key ID and Key Version Number.
 //
 // A single key is deleted when both the Key Identifier and the Key Version Number are provided.
@@ -115,7 +115,7 @@ const (
 	InstallP2EndOfCombinedProcess            byte = 0x03
 )
 
-// InstallForLoad returns a apdu.Capdu that contains an INSTALL [for load] command that is used to prepare the loading of an ELF.
+// InstallForLoad returns an apdu.Capdu that contains an INSTALL [for load] command that is used to prepare the loading of an ELF.
 //
 // A Load File Data Block Hash, LoadParameters or a token can be added.
 func InstallForLoad(p2 byte, loadFileAID, sdAID aid.AID, lfdbh []byte, loadParameters []byte, token []byte) (apdu.Capdu, error) {
@@ -153,7 +153,7 @@ func InstallForLoad(p2 byte, loadFileAID, sdAID aid.AID, lfdbh []byte, loadParam
 	}, nil
 }
 
-// LoadBlock returns a apdu.Capdu that contains a LOAD command that can be used to load the given block onto the card.
+// LoadBlock returns an apdu.Capdu that contains a LOAD command that can be used to load the given block onto the card.
 func LoadBlock(lastBlock bool, blockNum byte, block []byte) apdu.Capdu {
 	var p1 byte
 
@@ -171,7 +171,7 @@ func LoadBlock(lastBlock bool, blockNum byte, block []byte) apdu.Capdu {
 	}
 }
 
-// InstallForInstall returns a apdu.Capdu that contains an INSTALL [for installation] command.
+// InstallForInstall returns an apdu.Capdu that contains an INSTALL [for installation] command.
 func InstallForInstall(p2 byte, makeSelectable bool, elfAID, emAID, instanceAID aid.AID, privs open.Privileges, installParameters []byte, token []byte) (apdu.Capdu, error) {
 	var (
 		bPrivs []byte
@@ -232,7 +232,7 @@ func InstallForInstall(p2 byte, makeSelectable bool, elfAID, emAID, instanceAID 
 	}, nil
 }
 
-// InstallForMakeSelectable returns a apdu.Capdu that contains an INSTALL [for make selectable] command that is used to make an application selectable.
+// InstallForMakeSelectable returns an apdu.Capdu that contains an INSTALL [for make selectable] command that is used to make an application selectable.
 //
 // Make selectable parameters or a token can be added.
 func InstallForMakeSelectable(p2 byte, instanceAID aid.AID, privs open.Privileges, makeSelectableParameters []byte, token []byte) (apdu.Capdu, error) {
@@ -280,7 +280,7 @@ func InstallForMakeSelectable(p2 byte, instanceAID aid.AID, privs open.Privilege
 	}, nil
 }
 
-// InstallForRegistryUpdate returns a apdu.Capdu that contains an INSTALL [for registry update] command.
+// InstallForRegistryUpdate returns an apdu.Capdu that contains an INSTALL [for registry update] command.
 //
 // Registry update parameters or a token can be added.
 func InstallForRegistryUpdate(targetSDAID, instanceAID *aid.AID, privs *open.Privileges, regUpdateParameters []byte, token []byte) (apdu.Capdu, error) {
@@ -339,7 +339,7 @@ func InstallForRegistryUpdate(targetSDAID, instanceAID *aid.AID, privs *open.Pri
 	}, nil
 }
 
-// InstallForPersonalization returns a apdu.Capdu that contains an INSTALL [for personalization] command.
+// InstallForPersonalization returns an apdu.Capdu that contains an INSTALL [for personalization] command.
 func InstallForPersonalization(instanceAID aid.AID) apdu.Capdu {
 	data := make([]byte, 0, 6+len(instanceAID))
 	data = append(data, []byte{0x00, 0x00}...)
@@ -357,7 +357,7 @@ func InstallForPersonalization(instanceAID aid.AID) apdu.Capdu {
 	}
 }
 
-// InstallForExtradition returns a apdu.Capdu that contains an INSTALL [for extradition] command.
+// InstallForExtradition returns an apdu.Capdu that contains an INSTALL [for extradition] command.
 // Extradition parameters or a token will be added if present.
 func InstallForExtradition(targetSDAID aid.AID, appAID aid.AID, extraditionParameters []byte, token []byte) (apdu.Capdu, error) {
 	paramsLen, err := util.BuildGPBerLength(uint(len(extraditionParameters)))
@@ -392,7 +392,7 @@ func InstallForExtradition(targetSDAID aid.AID, appAID aid.AID, extraditionParam
 	}, nil
 }
 
-// PutKey returns a apdu.Capdu that contains a PUT KEY command that is used either:
+// PutKey returns an apdu.Capdu that contains a PUT KEY command that is used either:
 // to replace an existing key with a new key: The new key has the same or a different Key Version Number but the same Key Identifier as the key being replaced;
 // to replace multiple existing keys with new keys: The new keys have the same or a different Key Version Number (identical for all new keys) but the same Key Identifiers as the keys being replaced;
 // to Add a single new key: The new key has a different combination Key Identifier / Key Version Number than that of the existing keys;
@@ -434,7 +434,7 @@ const (
 	GetDataP2KeyInformationTemplate       byte = 0xE0
 )
 
-// GetData returns a apdu.Capdu that contains a GET DATA command with Ins = CA (even) that is used to retrieve data.
+// GetData returns an apdu.Capdu that contains a GET DATA command with Ins = CA (even) that is used to retrieve data.
 // Data can be added if a GET DATA command requires the passing of additional data.
 func GetData(p1, p2 byte, data []byte) apdu.Capdu {
 	return apdu.Capdu{
@@ -455,7 +455,7 @@ const (
 	GetStatusP2FormatGpTLV        byte = 0x02
 )
 
-// GetStatus returns a apdu.Capdu that contains a GET STATUS command with P2 = format BER-TLV.
+// GetStatus returns an apdu.Capdu that contains a GET STATUS command with P2 = format BER-TLV.
 // Data can be added if a GET STATUS command requires the passing of additional data (e.g. for filter).
 func GetStatus(p1 byte, next bool, data []byte) apdu.Capdu {
 	p2 := byte(0x02)
@@ -478,7 +478,7 @@ const (
 	manageChannelP1OpenNextAvailableSupplementaryLogicalChannel byte = 0x00
 )
 
-// ManageChannelOpen returns a apdu.Capdu that contains a MANAGE CHANNEL command for opening a logical channel.
+// ManageChannelOpen returns an apdu.Capdu that contains a MANAGE CHANNEL command for opening a logical channel.
 // A card supporting logical channel assignment by off-card entities may accept a reference control parameter P2.
 func ManageChannelOpen(p2 byte) apdu.Capdu {
 	return apdu.Capdu{
@@ -490,7 +490,7 @@ func ManageChannelOpen(p2 byte) apdu.Capdu {
 	}
 }
 
-// ManageChannelClose returns a apdu.Capdu that contains a MANAGE CHANNEL command for closing a logical channel.
+// ManageChannelClose returns an apdu.Capdu that contains a MANAGE CHANNEL command for closing a logical channel.
 func ManageChannelClose(p2 byte) apdu.Capdu {
 	return apdu.Capdu{
 		Cla: claIso,
@@ -507,7 +507,7 @@ const (
 	SetStatusP1SdAndAssociatedApplications byte = 0x60
 )
 
-// SetStatus returns a apdu.Capdu that contains a SET STATUS command.
+// SetStatus returns an apdu.Capdu that contains a SET STATUS command.
 // Data can be added if a SET STATUS command requires passing additional data.
 func SetStatus(p1, p2 byte, data []byte) apdu.Capdu {
 	return apdu.Capdu{
@@ -526,7 +526,7 @@ const (
 	selectP2NextOccurrence        byte = 0x02
 )
 
-// Select returns a apdu.Capdu that contains a SELECT command for selecting the application with the given aid.AID.
+// Select returns an apdu.Capdu that contains a SELECT command for selecting the application with the given aid.AID.
 func Select(firstOccurrence bool, appAID aid.AID) apdu.Capdu {
 	var p2 byte
 
@@ -557,7 +557,7 @@ const (
 	StoreDataP1ISOCase4                byte = 0x01
 )
 
-// StoreData returns a apdu.Capdu that contains a STORE DATA command for storing data in the given format in the currently selected application.
+// StoreData returns an apdu.Capdu that contains a STORE DATA command for storing data in the given format in the currently selected application.
 func StoreData(p1, blockNumber byte, data []byte) apdu.Capdu {
 	return apdu.Capdu{
 		Cla:  claGp,
@@ -710,7 +710,7 @@ func (req PrivacyRequirements) Bytes() []byte {
 	return outerBuilder.AddBytes(tag.PrivacyRequirements, innerBuilder.Bytes()).Bytes()
 }
 
-// SystemSpecificParameters providee additional parameters that can be used for an INSTALL command, although their presence might be ignored.
+// SystemSpecificParameters provides additional parameters that can be used for an INSTALL command, although their presence might be ignored.
 // If both tag 'C6' and 'C8' are present and the implementation does not make any distinction between Non-Volatile Code and Non-Volatile Data Memory
 // then the required minimum shall be the sum of both values.
 type SystemSpecificParameters struct {
@@ -1129,7 +1129,7 @@ func LookupResponseStatus(ins byte, resp apdu.Rapdu) ResponseStatus {
 	return ResponseStatus{SW: resp.String(), Description: description}
 }
 
-// ToString returns thee human readable response status.
+// ToString returns the human-readable response status.
 func (rs ResponseStatus) ToString() string {
 	return fmt.Sprintf("SW: %s Description: %s", rs.SW, rs.Description)
 }
