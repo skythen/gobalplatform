@@ -71,9 +71,9 @@ type SCPInformation struct {
 
 // SCP03SupportedKeys provides supported key lengths for SCP03.
 type SCP03SupportedKeys struct {
-	AES128 bool // 128 bit key.
-	AES192 bool // 192 bit key.
-	AES256 bool // 256 bit key.
+	AES128 bool // 128-bit key.
+	AES192 bool // 192-bit key.
+	AES256 bool // 256-bit key.
 }
 
 // ParseSCPInformation parses the BER-TLV encoded SCP information of one SCP and returns SCPInformation.

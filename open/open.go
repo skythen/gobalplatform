@@ -371,45 +371,45 @@ const (
 	// SecurityDomain qualifies an application as a Security Domain.
 	SecurityDomain Privilege = iota
 	// DAPVerification qualifies a Security Domain as capable of verifying a DAP.
-	DAPVerification = iota
+	DAPVerification
 	// DelegatedManagement qualifies a Security Domain as capable of delegated management.
-	DelegatedManagement = iota
+	DelegatedManagement
 	// CardLock qualifies an application as capable of locking the card.
-	CardLock = iota
+	CardLock
 	// CardTerminate qualifies an application as capable of terminating the card.
-	CardTerminate = iota
+	CardTerminate
 	// CardReset qualifies an application as capable of modifying the historical bytes.
-	CardReset = iota
+	CardReset
 	// CVMManagement qualifies an application as capable of managing a sdmd CVM of a CVM Application.
-	CVMManagement = iota
+	CVMManagement
 	// MandatedDAPVerification qualifies a Security Domain as capable of and requires the verification of a DAP for all load operations.
-	MandatedDAPVerification = iota
+	MandatedDAPVerification
 	// TrustedPath qualifies an application as a Trusted Path for inter- application communication.
-	TrustedPath = iota
+	TrustedPath
 	// AuthorizedManagement qualifies a Security Domain as capable of card content management.
-	AuthorizedManagement = iota
+	AuthorizedManagement
 	// TokenVerification qualifies a Security Domain as capable of verifying a token for Delegated Management.
-	TokenVerification = iota
+	TokenVerification
 	// GlobalDelete qualifies an application as capable of deleting any card content.
-	GlobalDelete = iota
+	GlobalDelete
 	// GlobalLock qualifies an application as capable of locking/unlocking any application.
-	GlobalLock = iota
+	GlobalLock
 	// GlobalRegistry qualifies an application as capable of accessing any entry in the GlobalPlatform Registry.
-	GlobalRegistry = iota
+	GlobalRegistry
 	// FinalApplication qualifies an application as the only Application selectable in card Life Cycle State CARD_LOCKED and TERMINATED.
-	FinalApplication = iota
+	FinalApplication
 	// GlobalService qualifies an application as a Global Service that provides services to other Applications on the card.
-	GlobalService = iota
+	GlobalService
 	// ReceiptGeneration qualifies a Security Domain as capable of generating a receipt for Delegated Management.
-	ReceiptGeneration = iota
+	ReceiptGeneration
 	// CipheredLoadFileDataBlock qualifies a Security Domain as requiring that the Load File being associated to it is to be loaded ciphered.
-	CipheredLoadFileDataBlock = iota
+	CipheredLoadFileDataBlock
 	// ContactlessActivation qualifies an application as capable of activating and deactivating other any Applications (including itself) on the contactless interface.
-	ContactlessActivation = iota
+	ContactlessActivation
 	// ContactlessSelfActivation qualifies an application as capable of activating itself on the contactless interface without a prior request to the Application with the Contactless Activation privilege.
-	ContactlessSelfActivation = iota
+	ContactlessSelfActivation
 	// PrivacyTrusted is an application that implements its own specific Privacy Protocol and is not impacted by the rules of the OPEN Privacy Extension.
-	PrivacyTrusted = iota
+	PrivacyTrusted
 )
 
 // Privileges is a list of Privilege.
