@@ -68,6 +68,32 @@ func DeleteCardContent(relatedObjects bool, elfOrAppAID aid.AID, token []byte, c
 	return capdu
 }
 
+// DeleteRootSecurityDomain returns a apdu.Capdu that contains a DELETE command that is used to delete a root security domain
+// and all associated applications.
+//
+// Delete command will be rejected, if the aid.AID does not refer to a root security domain or the Global Delete Privilege is missing.
+func DeleteRootSecurityDomain(sdAID aid.AID, token []byte, crtSignature *CRTDigitalSignature) apdu.Capdu {
+	builder := bertlv.Builder{}.AddBytes(tag.AID, sdAID)
+	if token != nil {
+		builder = builder.AddBytes(tag.DeleteToken, token)
+	}
+
+	if crtSignature != nil {
+		builder = builder.AddRaw(crtSignature.Bytes())
+	}
+
+	capdu := apdu.Capdu{
+		Cla:  claGp,
+		Ins:  deleteINS,
+		P1:   0x00,
+		P2:   0x00,
+		Data: builder.Bytes(),
+		Ne:   apdu.MaxLenResponseDataStandard,
+	}
+
+	return capdu
+}
+
 // DeleteKey returns a apdu.Capdu that contains a DELETE command that is used to delete a key
 // identified by the Key ID and Key Version Number.
 //
@@ -452,13 +478,41 @@ const (
 	GetStatusP1ApplicationsAndSSD byte = 0x40
 	GetStatusP1ELF                byte = 0x20
 	GetStatusP1ELFAndEM           byte = 0x10
+	GetStatusP1LogicallyDeleted   byte = 0x08
+	GetStatusP1OPEN               byte = 0x04
 	GetStatusP2FormatGpTLV        byte = 0x02
 )
 
 // GetStatus returns a apdu.Capdu that contains a GET STATUS command with P2 = format BER-TLV.
 // Data can be added if a GET STATUS command requires the passing of additional data (e.g. for filter).
+// GetStatusCommandDataField can be used to construct data field.
 func GetStatus(p1 byte, next bool, data []byte) apdu.Capdu {
 	p2 := byte(0x02)
+	if next {
+		p2 += 0x01
+	}
+
+	return apdu.Capdu{
+		Cla:  claGp,
+		Ins:  getStatusINS,
+		P1:   p1,
+		P2:   p2,
+		Data: data,
+		Ne:   apdu.MaxLenResponseDataStandard,
+	}
+}
+
+const (
+	GetStatusCRSP1Applications byte = 0x40
+	GetStatusCRSP1OPEN         byte = 0x04
+)
+
+// GetStatusCRS is used to retrieve information about applications that are registered in Contactless Registry Service (CRS).
+// Information about non-contactless applications are not available through this command.
+// Data can be added if a GET STATUS command requires the passing of additional data (e.g. for filter).
+// GetStatusCRSCommandDataField can be used to construct data field.
+func GetStatusCRS(p1 byte, next bool, data []byte) apdu.Capdu {
+	p2 := byte(0x00)
 	if next {
 		p2 += 0x01
 	}
@@ -505,6 +559,23 @@ const (
 	SetStatusP1ISD                         byte = 0x80
 	SetStatusP1ApplicationOrSSD            byte = 0x40
 	SetStatusP1SdAndAssociatedApplications byte = 0x60
+
+	SetStatusP1AvailabilityStateContactless      byte = 0x01 // Availability State over Contactless Interface
+	SetStatusP1PriorityOrderApplicationSelection byte = 0x02 // Priority Order for Application Selection
+	SetStatusP1CommunicationInterfaceAccess      byte = 0x04 // Communication Interface Access
+	SetStatusP1ContactlessProtocolTypeState      byte = 0x08 // Contactless Protocol Type State
+	SetStatusP1RemainingResponseData             byte = 0x80 // Remaining Response Data
+
+	SetStatusP2NotAvailableContactless        byte = 0x00 // OPEN shall not attempt to activate
+	SetStatusP2AvailableContactless           byte = 0x01 // OPEN shall attempt to activate
+	SetStatusP2AssignHighestPriority          byte = 0x01 // Assign Highest Priority
+	SetStatusP2AssignLowestPriority           byte = 0x81 // Assign Lowest Priority
+	SetStatusP2AssignVolatilePriority         byte = 0x02 // Assign Volatile Priority
+	SetStatusP2ResetVolatilePriority          byte = 0x82 // Reset Volatile Priority
+	SetStatusP2CommunicationInterfaceON       byte = 0x80 // Communication Interface switched ON
+	SetStatusP2CommunicationInterfaceOFF      byte = 0x00 // Communication Interface switched OFF
+	SetStatusP2EnableContactlessProtocolType  byte = 0x80 // Enable Contactless Protocol Type
+	SetStatusP2DisableContactlessProtocolType byte = 0x00 // Disable Contactless Protocol Type
 )
 
 // SetStatus returns a apdu.Capdu that contains a SET STATUS command.
@@ -567,330 +638,6 @@ func StoreData(p1, blockNumber byte, data []byte) apdu.Capdu {
 		Data: data,
 		Ne:   apdu.MaxLenResponseDataStandard,
 	}
-}
-
-// LoadFileStructure represents a GlobalPlatform Load File that can be loaded to a SE with a LOAD command.
-type LoadFileStructure struct {
-	DAPBlocks                 []DAPBlock // Blocks to be verified by a Security Domain with the DAP Verification or Mandated DAP Verification privilege.
-	LoadFileDataBlock         []byte     // Plaintext platform specific code of a Load File - shall not be present when CipheredLoadFileDataBlock is present.
-	CipheredLoadFileDataBlock []byte     // Ciphered platform specific code of a Load File that can be decrypted by a Security Domain with the Ciphered Load File Data Block privilege - shall not be present when LoadFileDataBlock is present
-	ICV                       []byte     // May be present if CipheredLoadFileDataBlock is present and has been encrypted with an ICV other than the zero ICV.
-}
-
-// Bytes returns LoadFileStructure as BER-TLV encoded bytes.
-func (lfs LoadFileStructure) Bytes() []byte {
-	builder := &bertlv.Builder{}
-
-	for _, dapBlock := range lfs.DAPBlocks {
-		d := dapBlock.Bytes()
-		builder = builder.AddRaw(d)
-	}
-
-	if lfs.LoadFileDataBlock != nil {
-		builder = builder.AddBytes(tag.LoadFileDataBlock, lfs.LoadFileDataBlock)
-	}
-
-	if lfs.ICV != nil {
-		builder = builder.AddBytes(tag.ICV, lfs.ICV)
-	}
-
-	if lfs.CipheredLoadFileDataBlock != nil {
-		builder = builder.AddBytes(tag.CipheredLoadFileDataBlock, lfs.CipheredLoadFileDataBlock)
-	}
-
-	return builder.Bytes()
-}
-
-// DAPBlock represents a Data Authentication Pattern block (Load File Data Block Signature) and contains the AID of the Security Domain that shall verify
-// this block as well as the signature over a Load File Data Block that shall be loaded.
-type DAPBlock struct {
-	SDAID         aid.AID // AID of the Security Domain with the (Mandated) DAP Verification privilege.
-	LFDBSignature []byte  // Signature over the Load File Data Block.
-}
-
-// Bytes returns DAPBlock as BER-TLV bytes.
-func (dapBlock DAPBlock) Bytes() []byte {
-	return bertlv.Builder{}.AddBytes(tag.DAPBlock,
-		bertlv.Builder{}.
-			AddBytes(tag.AID, dapBlock.SDAID).
-			AddBytes(tag.LoadFileDataBlockSignature, dapBlock.LFDBSignature).
-			Bytes()).
-		Bytes()
-}
-
-// CRTDigitalSignature is the Cryptographic Reference Template for Digital Signature and is especially recommended to use with SCP10.
-type CRTDigitalSignature struct {
-	SDIdentificationNumber        []byte // Identification Number of the Security Domain with the Token Verification privilege.
-	SDImageNumber                 []byte // Image Number of the Security Domain with the Token Verification privilege.
-	ApplicationProviderIdentifier []byte // Application Provider identifier.
-	TokenIdentifier               []byte // Token identifier/number (digital signature counter).
-}
-
-// Bytes returns CRTDigitalSignature as BER-TLV encoded bytes.
-func (crt CRTDigitalSignature) Bytes() []byte {
-	builder := &bertlv.Builder{}
-
-	if crt.SDIdentificationNumber != nil {
-		builder = builder.AddBytes(tag.SDIdentificationNumber, crt.SDIdentificationNumber)
-	}
-
-	if crt.SDImageNumber != nil {
-		builder = builder.AddBytes(tag.SDImageNumber, crt.SDImageNumber)
-	}
-
-	if crt.ApplicationProviderIdentifier != nil {
-		builder = builder.AddBytes(tag.ApplicationProviderIdentifier, crt.ApplicationProviderIdentifier)
-	}
-
-	if crt.TokenIdentifier != nil {
-		builder = builder.AddBytes(tag.TokenIdentification, crt.TokenIdentifier)
-	}
-
-	return bertlv.Builder{}.AddBytes(tag.ControlReferenceTemplateForDigitalSignature, builder.Bytes()).Bytes()
-}
-
-// PrivacyRequirements may be specified for an Application using tag 'E0' as part of System Specific Install Parameters.
-type PrivacyRequirements struct {
-	RequiredPrivacyStatus    []RequiredPrivacyStatus   // 0 to N occurrences allowed
-	RequiredPrivacyCondition *RequiredPrivacyCondition // structure is not specified by GPC Privacy Framework, 0 to 1 occurrences allowed
-}
-
-// RequiredPrivacyStatus is the Privacy Status that must have been reached in the execution of the Global Privacy Protocol
-// and is maintained by the GPP service.
-type RequiredPrivacyStatus struct {
-	Constructed bool   // indicates whether Value consists of constructed data objects or not
-	Value       []byte // structure is not specified by GPC Privacy Framework
-}
-
-// Bytes returns RequiredPrivacyStatus as BER-TLV encoded bytes.
-func (req RequiredPrivacyStatus) Bytes() []byte {
-	builder := &bertlv.Builder{}
-
-	if req.Constructed {
-		builder = builder.AddBytes(tag.RequiredPrivacyStatusConstructed, req.Value)
-	} else {
-		builder = builder.AddBytes(tag.RequiredPrivacyStatus, req.Value)
-	}
-
-	return builder.Bytes()
-}
-
-// RequiredPrivacyCondition defines a condition for an application about the Current Privacy Status before the OPEX allows the selection of that application.
-type RequiredPrivacyCondition struct {
-	Constructed bool   // indicates whether Value consists of constructed data objects or not
-	Value       []byte // structure is not specified by GPC Privacy Framework
-}
-
-// Bytes returns RequiredPrivacyCondition as BER-TLV encoded bytes.
-func (req RequiredPrivacyCondition) Bytes() []byte {
-	builder := &bertlv.Builder{}
-
-	if req.Constructed {
-		builder = builder.AddBytes(tag.RequiredPrivacyConditionConstructed, req.Value)
-	} else {
-		builder = builder.AddBytes(tag.RequiredPrivacyCondition, req.Value)
-	}
-
-	return builder.Bytes()
-}
-
-// Bytes returns PrivacyRequirements as BER-TLV encoded bytes.
-func (req PrivacyRequirements) Bytes() []byte {
-	outerBuilder := &bertlv.Builder{}
-	innerBuilder := &bertlv.Builder{}
-
-	for _, ps := range req.RequiredPrivacyStatus {
-		innerBuilder = innerBuilder.AddRaw(ps.Bytes())
-	}
-
-	if req.RequiredPrivacyCondition != nil {
-		innerBuilder = innerBuilder.AddRaw(req.RequiredPrivacyCondition.Bytes())
-	}
-
-	return outerBuilder.AddBytes(tag.PrivacyRequirements, innerBuilder.Bytes()).Bytes()
-}
-
-// SystemSpecificParameters providee additional parameters that can be used for an INSTALL command, although their presence might be ignored.
-// If both tag 'C6' and 'C8' are present and the implementation does not make any distinction between Non-Volatile Code and Non-Volatile Data Memory
-// then the required minimum shall be the sum of both values.
-type SystemSpecificParameters struct {
-	NonVolatileCodeMinimumRequirement   []byte               // 2-byte integer for values up to 32767 and a 4-byte integer above 32767
-	VolatileMemoryMinimumRequirement    []byte               // 2-byte integer for values up to 32767 and a 4-byte integer above 32767
-	NonVolatileMemoryMinimumRequirement []byte               // 2-byte integer for values up to 32767 and a 4-byte integer above 32767
-	VolatileReservedMemory              []byte               // 2-byte integer for values up to 32767 and a 4-byte integer above 32767
-	NonVolatileReservedMemory           []byte               // 2-byte integer for values up to 32767 and a 4-byte integer above 32767
-	GlobalServiceParameters             []byte               // One or more two-byte service parameters.
-	TS102226SpecificParameters          []byte               // UICC specific parameters.
-	LoadFileDataBlockFormatID           util.NullByte        // Proprietary Load File Data Block format ID.
-	LoadFileDataBlockParameters         []byte               // Proprietary Load File Data Block parameters.
-	RestrictParameter                   *open.Restrict       // Lists functionalities that shall be disabled.
-	ImplicitSelectionParameter          util.NullByte        // Implicit selection parameter.
-	PrivacyRequirements                 *PrivacyRequirements // Privacy Requirements for an application.
-}
-
-// Bytes returns SystemSpecificParameters as BER-TLV encoded bytes.
-func (ssp SystemSpecificParameters) Bytes() []byte {
-	builder := &bertlv.Builder{}
-
-	if ssp.NonVolatileCodeMinimumRequirement != nil {
-		builder = builder.AddBytes(tag.NonVolatileCodeMinimumRequirement, ssp.NonVolatileCodeMinimumRequirement)
-	}
-
-	if ssp.VolatileMemoryMinimumRequirement != nil {
-		builder = builder.AddBytes(tag.VolatileMemoryQuota, ssp.VolatileMemoryMinimumRequirement)
-	}
-
-	if ssp.NonVolatileMemoryMinimumRequirement != nil {
-		builder = builder.AddBytes(tag.NonVolatileMemoryQuota, ssp.NonVolatileMemoryMinimumRequirement)
-	}
-
-	if ssp.GlobalServiceParameters != nil {
-		builder = builder.AddBytes(tag.GlobalServiceParameters, ssp.GlobalServiceParameters)
-	}
-
-	if ssp.LoadFileDataBlockFormatID.Valid {
-		builder = builder.AddByte(tag.LoadFileDataBlockFormatID, ssp.LoadFileDataBlockFormatID.Byte)
-	}
-
-	if ssp.VolatileReservedMemory != nil {
-		builder = builder.AddBytes(tag.VolatileReservedMemory, ssp.VolatileReservedMemory)
-	}
-
-	if ssp.NonVolatileReservedMemory != nil {
-		builder = builder.AddBytes(tag.NonVolatileReservedMemory, ssp.NonVolatileReservedMemory)
-	}
-
-	if ssp.RestrictParameter != nil {
-		builder = builder.AddByte(tag.Restrict, ssp.RestrictParameter.Byte())
-	}
-
-	if ssp.LoadFileDataBlockParameters != nil {
-		builder = builder.AddBytes(tag.LoadFileDataBlockParameter, ssp.LoadFileDataBlockParameters)
-	}
-
-	if ssp.TS102226SpecificParameters != nil {
-		builder = builder.AddBytes(tag.TS102226SpecificParameters, ssp.TS102226SpecificParameters)
-	}
-
-	if ssp.ImplicitSelectionParameter.Valid {
-		builder = builder.AddByte(tag.ImplicitSelectionParameter, ssp.ImplicitSelectionParameter.Byte)
-	}
-
-	if ssp.PrivacyRequirements != nil {
-		builder = builder.AddRaw(ssp.PrivacyRequirements.Bytes())
-	}
-
-	return bertlv.Builder{}.AddBytes(tag.SystemSpecificParameter, builder.Bytes()).Bytes()
-}
-
-// LoadParameters provide additional parameters that can be used for an INSTALL [for load] command.
-type LoadParameters struct {
-	SystemSpecificParameters                    *SystemSpecificParameters
-	ControlReferenceTemplateForDigitalSignature *CRTDigitalSignature
-}
-
-// Bytes returns LoadParameters as BER-TLV encoded bytes.
-func (lp LoadParameters) Bytes() []byte {
-	builder := &bertlv.Builder{}
-
-	if lp.SystemSpecificParameters != nil {
-		builder = builder.AddRaw(lp.SystemSpecificParameters.Bytes())
-	}
-
-	if lp.ControlReferenceTemplateForDigitalSignature != nil {
-		builder = builder.AddRaw(lp.ControlReferenceTemplateForDigitalSignature.Bytes())
-	}
-
-	return builder.Bytes()
-}
-
-// InstallParameters provide additional parameters that can be used for commands containing the INSTALL [for installation] step.
-type InstallParameters struct {
-	ApplicationSpecificParameters               []byte
-	SystemSpecificParameters                    *SystemSpecificParameters
-	TS102226SpecificTemplate                    []byte
-	ControlReferenceTemplateForDigitalSignature *CRTDigitalSignature
-}
-
-// Bytes returns InstallParameters as BER-TLV encoded bytes.
-func (ip InstallParameters) Bytes() []byte {
-	builder := &bertlv.Builder{}
-
-	if len(ip.ApplicationSpecificParameters) == 0 {
-		builder = builder.AddEmpty(tag.ApplicationSpecificParameters)
-	} else {
-		builder = builder.AddBytes(tag.ApplicationSpecificParameters, ip.ApplicationSpecificParameters)
-	}
-
-	if ip.SystemSpecificParameters != nil {
-		builder = builder.AddRaw(ip.SystemSpecificParameters.Bytes())
-	}
-
-	if ip.TS102226SpecificTemplate != nil {
-		builder = builder.AddBytes(tag.TS102226SpecificTemplate, ip.TS102226SpecificTemplate)
-	}
-
-	if ip.ControlReferenceTemplateForDigitalSignature != nil {
-		builder = builder.AddRaw(ip.ControlReferenceTemplateForDigitalSignature.Bytes())
-	}
-
-	return builder.Bytes()
-}
-
-// MakeSelectableParameters provides additional parameters that can be used for an INSTALL [for make selectable] command.
-type MakeSelectableParameters struct {
-	SystemSpecificParameters                    *SystemSpecificParameters
-	ControlReferenceTemplateForDigitalSignature *CRTDigitalSignature
-}
-
-// Bytes returns MakeSelectableParameters as BER-TLV encoded bytes.
-func (mp MakeSelectableParameters) Bytes() []byte {
-	builder := &bertlv.Builder{}
-
-	if mp.SystemSpecificParameters != nil {
-		builder = builder.AddRaw(mp.SystemSpecificParameters.Bytes())
-	}
-
-	if mp.ControlReferenceTemplateForDigitalSignature != nil {
-		builder = builder.AddRaw(mp.ControlReferenceTemplateForDigitalSignature.Bytes())
-	}
-
-	return builder.Bytes()
-}
-
-// ExtraditionParameters provides additional parameters that can be used for an INSTALL [for extradition] command.
-type ExtraditionParameters struct {
-	ControlReferenceTemplateForDigitalSignature *CRTDigitalSignature
-}
-
-// Bytes returns ExtraditionParameters as BER-TLV encoded bytes.
-func (ep ExtraditionParameters) Bytes() []byte {
-	if ep.ControlReferenceTemplateForDigitalSignature != nil {
-		return bertlv.Builder{}.AddRaw(ep.ControlReferenceTemplateForDigitalSignature.Bytes()).Bytes()
-	}
-
-	return nil
-}
-
-// RegistryUpdateParameters provides additional parameters that can be used for an INSTALL [for registry update] command.
-type RegistryUpdateParameters struct {
-	SystemSpecificParameters                    *SystemSpecificParameters
-	ControlReferenceTemplateForDigitalSignature *CRTDigitalSignature
-}
-
-// Bytes returns RegistryUpdateParameters as BER-TLV encoded bytes.
-func (rup RegistryUpdateParameters) Bytes() []byte {
-	builder := &bertlv.Builder{}
-
-	if rup.SystemSpecificParameters != nil {
-		builder = builder.AddRaw(rup.SystemSpecificParameters.Bytes())
-	}
-
-	if rup.ControlReferenceTemplateForDigitalSignature != nil {
-		builder = builder.AddRaw(rup.ControlReferenceTemplateForDigitalSignature.Bytes())
-	}
-
-	return builder.Bytes()
 }
 
 // OnLogicalChannel returns the modified CLA byte that indicates the specified logical channel ID.
@@ -1129,7 +876,7 @@ func LookupResponseStatus(ins byte, resp apdu.Rapdu) ResponseStatus {
 	return ResponseStatus{SW: resp.String(), Description: description}
 }
 
-// ToString returns thee human readable response status.
+// ToString returns the human-readable response status.
 func (rs ResponseStatus) ToString() string {
 	return fmt.Sprintf("SW: %s Description: %s", rs.SW, rs.Description)
 }
