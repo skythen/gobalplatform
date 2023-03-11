@@ -1,9 +1,6 @@
 package command
 
 import (
-	"encoding/hex"
-	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -72,6 +69,54 @@ func TestDeleteCardContent(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			received := DeleteCardContent(tc.inputRelatedObjects, tc.inputAID, tc.inputToken, tc.inputSignature)
+			if !cmp.Equal(tc.expected, received) {
+				t.Errorf("Expected: '%v', got: '%v'", tc.expected, received)
+			}
+		})
+	}
+}
+
+func TestDeleteRootSecurityDomain(t *testing.T) {
+	tests := []struct {
+		name           string
+		inputAID       aid.AID
+		inputToken     []byte
+		inputSignature *CRTDigitalSignature
+		expected       apdu.Capdu
+	}{
+		{
+			name:           "DELETE no token, no signatures",
+			inputAID:       aid.AID{0x01, 0x02, 0x03, 0x04, 0x05},
+			inputToken:     nil,
+			inputSignature: nil,
+			expected: apdu.Capdu{
+				Cla:  0x80,
+				Ins:  0xE4,
+				P1:   0x00,
+				P2:   0x00,
+				Data: []byte{0x4F, 0x05, 0x01, 0x02, 0x03, 0x04, 0x05},
+				Ne:   256,
+			},
+		},
+		{
+			name:           "DELETE with token, with signatures",
+			inputAID:       aid.AID{0x01, 0x02, 0x03, 0x04, 0x05},
+			inputToken:     []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
+			inputSignature: &CRTDigitalSignature{SDIdentificationNumber: []byte{0x01, 0x02, 0x03, 0x04}},
+			expected: apdu.Capdu{
+				Cla:  0x80,
+				Ins:  0xE4,
+				P1:   0x00,
+				P2:   0x00,
+				Data: []byte{0x4F, 0x05, 0x01, 0x02, 0x03, 0x04, 0x05, 0x9E, 0x08, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0xB6, 0x06, 0x42, 0x04, 0x01, 0x02, 0x03, 0x04},
+				Ne:   256,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			received := DeleteRootSecurityDomain(tc.inputAID, tc.inputToken, tc.inputSignature)
 			if !cmp.Equal(tc.expected, received) {
 				t.Errorf("Expected: '%v', got: '%v'", tc.expected, received)
 			}
@@ -1076,6 +1121,54 @@ func TestGetStatus(t *testing.T) {
 	}
 }
 
+func TestGetStatusCRS(t *testing.T) {
+	tests := []struct {
+		name      string
+		inputP1   byte
+		inputData []byte
+		inputNext bool
+		expected  apdu.Capdu
+	}{
+		{
+			name:      "GET STATUS CRS Applications",
+			inputP1:   0x40,
+			inputData: []byte{0x4F, 0x06, 0xA0, 0x00, 0x00, 0x00, 0x03, 0x00},
+			inputNext: false,
+			expected: apdu.Capdu{
+				Cla:  0x80,
+				Ins:  0xF2,
+				P1:   0x40,
+				P2:   0x00,
+				Data: []byte{0x4F, 0x06, 0xA0, 0x00, 0x00, 0x00, 0x03, 0x00},
+				Ne:   256,
+			},
+		},
+		{
+			name:      "GET STATUS CRS next",
+			inputP1:   0x40,
+			inputData: []byte{0x4F, 0x06, 0xA0, 0x00, 0x00, 0x00, 0x03, 0x00},
+			inputNext: true,
+			expected: apdu.Capdu{
+				Cla:  0x80,
+				Ins:  0xF2,
+				P1:   0x40,
+				P2:   0x01,
+				Data: []byte{0x4F, 0x06, 0xA0, 0x00, 0x00, 0x00, 0x03, 0x00},
+				Ne:   256,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			received := GetStatusCRS(tc.inputP1, tc.inputNext, tc.inputData)
+			if !cmp.Equal(tc.expected, received) {
+				t.Errorf("Expected: '%v', got: '%v'", tc.expected, received)
+			}
+		})
+	}
+}
+
 func TestSetStatus(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -1164,323 +1257,6 @@ func TestStoreData(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			received := StoreData(tc.inputP1, tc.inputBlockNumber, tc.inputData)
-			if !cmp.Equal(tc.expected, received) {
-				t.Errorf("Expected: '%v', got: '%v'", tc.expected, received)
-			}
-		})
-	}
-}
-
-func TestLoadFileStructure_Bytes(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    LoadFileStructure
-		expected []byte
-	}{
-		{
-			name: "convert to bytes",
-			input: LoadFileStructure{
-				DAPBlocks: []DAPBlock{
-					{
-						SDAID:         []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
-						LFDBSignature: []byte{0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF},
-					},
-					{
-						SDAID:         []byte{0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88},
-						LFDBSignature: []byte{0xFF, 0xEE, 0xDD, 0xEE, 0xCC, 0xBB},
-					},
-				},
-				LoadFileDataBlock:         []byte{0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8},
-				ICV:                       []byte{0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8},
-				CipheredLoadFileDataBlock: []byte{0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8},
-			},
-			expected: []byte{
-				0xE2, 0x12, 0x4F, 0x08, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0xC3, 0x06, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF,
-				0xE2, 0x12, 0x4F, 0x08, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0xC3, 0x06, 0xFF, 0xEE, 0xDD, 0xEE, 0xCC, 0xBB,
-				0xC4, 0x08, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8,
-				0xD3, 0x08, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8,
-				0xD4, 0x08, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8},
-		},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			received := tc.input.Bytes()
-
-			if !cmp.Equal(tc.expected, received) {
-				t.Errorf("Expected: '%v', got: '%v'", tc.expected, received)
-			}
-		})
-	}
-}
-
-func TestInstallParameters_Bytes(t *testing.T) {
-	tests := []struct {
-		name        string
-		input       InstallParameters
-		expected    []byte
-		expectError bool
-	}{
-		{
-			name: "convert to bytes ",
-			input: InstallParameters{
-				ApplicationSpecificParameters: []byte{0x01, 0x02, 0x03, 0x04, 0x05},
-				SystemSpecificParameters: &SystemSpecificParameters{
-					NonVolatileCodeMinimumRequirement: []byte{0x01, 0x00},
-					GlobalServiceParameters:           []byte{0x04, 0x05, 0x06},
-					VolatileReservedMemory:            []byte{0x02, 0x00},
-					NonVolatileReservedMemory:         []byte{0x03, 0x00},
-					LoadFileDataBlockFormatID:         util.NullByte{Byte: 0xFF, Valid: true},
-					LoadFileDataBlockParameters:       []byte{0x01, 0x02, 0x03},
-					ImplicitSelectionParameter:        util.NullByte{Byte: 0xEE, Valid: true},
-				},
-			},
-			expected: []byte{
-				0xC9, 0x05, 0x01, 0x02, 0x03, 0x04, 0x05,
-				0xEF, 0x1C,
-				0xC6, 0x02, 0x01, 0x00,
-				0xCB, 0x03, 0x04, 0x05, 0x06,
-				0xCD, 0x01, 0xFF,
-				0xD7, 0x02, 0x02, 0x00,
-				0xD8, 0x02, 0x03, 0x00,
-				0xDD, 0x03, 0x01, 0x02, 0x03,
-				0xCF, 0x01, 0xEE,
-			},
-			expectError: false,
-		},
-		{
-			name: "empty application specific",
-			input: InstallParameters{
-				ApplicationSpecificParameters: nil,
-				SystemSpecificParameters: &SystemSpecificParameters{
-					NonVolatileCodeMinimumRequirement: []byte{0x01, 0x00},
-					GlobalServiceParameters:           []byte{0x04, 0x05, 0x06},
-					VolatileReservedMemory:            []byte{0x02, 0x00},
-					NonVolatileReservedMemory:         []byte{0x03, 0x00},
-					LoadFileDataBlockFormatID:         util.NullByte{Byte: 0xFF, Valid: true},
-					LoadFileDataBlockParameters:       []byte{0x01, 0x02, 0x03},
-					ImplicitSelectionParameter:        util.NullByte{Byte: 0xEE, Valid: true},
-				},
-			},
-			expected: []byte{
-				0xC9, 0x00, // ApplicationSpecificParameters
-				0xEF, 0x1C, // SystemSpecificParameters
-				0xC6, 0x02, 0x01, 0x00, // NonVolatileCodeMinimumRequirement
-				0xCB, 0x03, 0x04, 0x05, 0x06, // GlobalServiceParameters
-				0xCD, 0x01, 0xFF, // LoadFileDataBlockFormatId
-				0xD7, 0x02, 0x02, 0x00, // VolatileReservedMemory
-				0xD8, 0x02, 0x03, 0x00, // NonVolatileReservedMemory
-				0xDD, 0x03, 0x01, 0x02, 0x03, // LoadFileDataBlockParameters
-				0xCF, 0x01, 0xEE, // ImplicitSelectionParameter
-			},
-			expectError: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			received := tc.input.Bytes()
-			fmt.Println(strings.ToUpper(hex.EncodeToString(received)))
-
-			if !cmp.Equal(tc.expected, received) {
-				t.Errorf("Expected: '%v', got: '%v'", tc.expected, received)
-			}
-		})
-	}
-}
-
-func TestSystemSpecificParameters_Bytes(t *testing.T) {
-	tests := []struct {
-		name        string
-		input       SystemSpecificParameters
-		expected    []byte
-		expectError bool
-	}{
-		{
-			name: "",
-			input: SystemSpecificParameters{
-				NonVolatileCodeMinimumRequirement: []byte{0x01, 0x00},
-				GlobalServiceParameters:           []byte{0x04, 0x05, 0x06},
-				VolatileReservedMemory:            []byte{0x02, 0x00},
-				NonVolatileReservedMemory:         []byte{0x03, 0x00},
-				LoadFileDataBlockFormatID:         util.NullByte{Byte: 0xFF, Valid: true},
-				LoadFileDataBlockParameters:       []byte{0x01, 0x02, 0x03},
-				ImplicitSelectionParameter:        util.NullByte{Byte: 0xEE, Valid: true},
-				PrivacyRequirements: &PrivacyRequirements{
-					RequiredPrivacyStatus: nil,
-					RequiredPrivacyCondition: &RequiredPrivacyCondition{
-						Constructed: false,
-						Value:       []byte{0x01, 0x02},
-					},
-				},
-			},
-			expected: []byte{
-				0xEF, 0x22, // SystemSpecificParameters
-				0xC6, 0x02, 0x01, 0x00, // NonVolatileCodeMinimumRequirement
-				0xCB, 0x03, 0x04, 0x05, 0x06, // GlobalServiceParameters
-				0xCD, 0x01, 0xFF, // LoadFileDataBlockFormatId
-				0xD7, 0x02, 0x02, 0x00, // VolatileReservedMemory
-				0xD8, 0x02, 0x03, 0x00, // NonVolatileReservedMemory
-				0xDD, 0x03, 0x01, 0x02, 0x03, // LoadFileDataBlockParameters
-				0xCF, 0x01, 0xEE, // ImplicitSelectionParameter
-				0xE0, 0x04, 0x81, 0x02, 0x01, 0x02, // Privacy Requirements
-			},
-			expectError: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			received := tc.input.Bytes()
-
-			if !cmp.Equal(tc.expected, received) {
-				t.Errorf("Expected: '%v', got: '%v'", tc.expected, received)
-			}
-		})
-	}
-}
-
-func TestDapBlock_Bytes(t *testing.T) {
-	tests := []struct {
-		name     string
-		dapBlock DAPBlock
-		expected []byte
-	}{
-		{
-			name: "bytes",
-			dapBlock: DAPBlock{
-				SDAID:         aid.AID{0x01, 0x02, 0x03, 0x04, 0x05},
-				LFDBSignature: []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
-			},
-			expected: []byte{0xE2, 0x11, 0x4F, 0x05, 0x01, 0x02, 0x03, 0x04, 0x05, 0xC3, 0x08, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			received := tc.dapBlock.Bytes()
-
-			if !cmp.Equal(tc.expected, received) {
-				t.Errorf("Expected: '%v', got: '%v'", tc.expected, received)
-			}
-		})
-	}
-}
-
-func TestRequiredPrivacyStatus_Bytes(t *testing.T) {
-	tests := []struct {
-		name                       string
-		inputRequiredPrivacyStatus RequiredPrivacyStatus
-		expected                   []byte
-	}{
-		{
-			name: "not constructed bytes",
-			inputRequiredPrivacyStatus: RequiredPrivacyStatus{
-				Constructed: false,
-				Value:       []byte{0x00, 0x01, 0x02},
-			},
-			expected: []byte{0x80, 0x03, 0x00, 0x01, 0x02},
-		},
-		{
-			name: "constructed bytes",
-			inputRequiredPrivacyStatus: RequiredPrivacyStatus{
-				Constructed: true,
-				Value:       []byte{0x00, 0x01, 0x02},
-			},
-			expected: []byte{0xA0, 0x03, 0x00, 0x01, 0x02},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			received := tc.inputRequiredPrivacyStatus.Bytes()
-
-			if !cmp.Equal(tc.expected, received) {
-				t.Errorf("Expected: '%v', got: '%v'", tc.expected, received)
-			}
-		})
-	}
-}
-
-func TestRequiredPrivacyCondition_Bytes(t *testing.T) {
-	tests := []struct {
-		name                          string
-		inputRequiredPrivacyCondition RequiredPrivacyCondition
-		expected                      []byte
-	}{
-		{
-			name: "not constructed bytes",
-			inputRequiredPrivacyCondition: RequiredPrivacyCondition{
-				Constructed: false,
-				Value:       []byte{0x00, 0x01, 0x02},
-			},
-			expected: []byte{0x81, 0x03, 0x00, 0x01, 0x02},
-		},
-		{
-			name: "constructed bytes",
-			inputRequiredPrivacyCondition: RequiredPrivacyCondition{
-				Constructed: true,
-				Value:       []byte{0x00, 0x01, 0x02},
-			},
-			expected: []byte{0xA1, 0x03, 0x00, 0x01, 0x02},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			received := tc.inputRequiredPrivacyCondition.Bytes()
-
-			if !cmp.Equal(tc.expected, received) {
-				t.Errorf("Expected: '%v', got: '%v'", tc.expected, received)
-			}
-		})
-	}
-}
-
-func TestPrivacyRequirements_Bytes(t *testing.T) {
-	tests := []struct {
-		name                     string
-		inputPrivacyRequirements PrivacyRequirements
-		expected                 []byte
-	}{
-		{
-			name: "multiple status, no condition",
-			inputPrivacyRequirements: PrivacyRequirements{
-				RequiredPrivacyStatus: []RequiredPrivacyStatus{
-					{
-						Constructed: false,
-						Value:       []byte{0xF1, 0xF2},
-					},
-					{
-						Constructed: true,
-						Value:       []byte{0xE1, 0xE2},
-					},
-				},
-				RequiredPrivacyCondition: nil,
-			},
-			expected: []byte{0xE0, 0x08, 0x80, 0x02, 0xF1, 0xF2, 0xA0, 0x02, 0xE1, 0xE2},
-		},
-		{
-			name: "one status, with condition",
-			inputPrivacyRequirements: PrivacyRequirements{
-				RequiredPrivacyStatus: []RequiredPrivacyStatus{
-					{
-						Constructed: false,
-						Value:       []byte{0xF1},
-					},
-				},
-				RequiredPrivacyCondition: &RequiredPrivacyCondition{
-					Constructed: true,
-					Value:       []byte{0xE1, 0xE2},
-				},
-			},
-			expected: []byte{0xE0, 0x07, 0x80, 0x01, 0xF1, 0xA1, 0x02, 0xE1, 0xE2},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			received := tc.inputPrivacyRequirements.Bytes()
-
 			if !cmp.Equal(tc.expected, received) {
 				t.Errorf("Expected: '%v', got: '%v'", tc.expected, received)
 			}
