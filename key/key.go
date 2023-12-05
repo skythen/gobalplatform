@@ -15,24 +15,24 @@ import (
 type UsageType int
 
 const (
-	CMac            UsageType = iota
-	RMac                      = iota
-	CMacRMac                  = iota
-	CEnc                      = iota
-	REnc                      = iota
-	CEncREnc                  = iota
-	CDek                      = iota
-	RDek                      = iota
-	CDekRDek                  = iota
-	PkSdAut                   = iota
-	SkSdAut                   = iota
-	Token                     = iota
-	Receipt                   = iota
-	Dap                       = iota
-	PkSdAutToken              = iota
-	SkSdAutReceipt            = iota
-	PkSdAutDap                = iota
-	PkSdAutTokenDap           = iota
+	CMac UsageType = iota
+	RMac
+	CMacRMac
+	CEnc
+	REnc
+	CEncREnc
+	CDek
+	RDek
+	CDekRDek
+	PkSdAut
+	SkSdAut
+	Token
+	Receipt
+	Dap
+	PkSdAutToken
+	SkSdAutReceipt
+	PkSdAutDap
+	PkSdAutTokenDap
 )
 
 const (

@@ -10,9 +10,9 @@ const (
 	// NotAuthenticated indicates that authentication status is neither AUTHENTICATED nor ANY_AUTHENTICATED.
 	NotAuthenticated AuthenticationStatus = iota
 	// Authenticated indicates authentication status AUTHENTICATED.
-	Authenticated = iota
+	Authenticated
 	// AnyAuthenticated indicates authentication status ANY_AUTHENTICATED.
-	AnyAuthenticated = iota
+	AnyAuthenticated
 )
 
 // Level provides secure messaging protection levels that are applied
